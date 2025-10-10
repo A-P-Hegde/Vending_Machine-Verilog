@@ -84,7 +84,7 @@ module Vending_Machine (
 
         //Resetting after item out
         else if(item_out) begin
-            if(rst_counter == 6) begin    
+            if(rst_counter == 4) begin    
                 Five_out <= 0;
                 Ten_out <= 0;
                 Twenty_out <= 0;
@@ -217,6 +217,9 @@ module Vending_Machine (
                         next_state = S35;
 
                 S40: //This shoud be the limit User should not put more money than this (NOT COMPLETED)
+
+                default:
+                    next_state = S0;
                 
         endcase
 
