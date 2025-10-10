@@ -28,8 +28,9 @@ module Vending_Machine (
     wire [8:0]current_state,next_state;
 
     //Item Cost Wire
-    parameter cost_It_1 = 25
-
+    parameter cost_It_1 = 20;    //Code is made for max cost of item being 20
+                                              //Just add more states to make max cost more
+                                              //max cost should be <= largest money state - 20 
     //-----------------------------------------------------------------------------------//
     
     //Instantiating the modules
@@ -37,10 +38,10 @@ module Vending_Machine (
     Change_remaining ch(.clk(clk),.rst(internal_reset),.en(en_for_change),
     .req_amt(req_amt),                                             //NOT COMPLETED INSTANTIATION (missing ports)!!!!
     .Five_in(Five_in),.Ten_in(Ten_in),.Twenty_in(Twenty_in),
-    .Five_out(Five_out),.Ten_out(Ten_out),.Twenty_out(Twenty_out)
+    .Five_out(Five_out),.Ten_out(Ten_out),.Twenty_out(Twenty_out),
     .enable_dispense(enable_dispense));
 
-    Item it1(.clk(clk),.rst(internal_reset,),.en1(en_for_items),.en2(enable_dispense),
+    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_items),.en2(enable_dispense),
     .cost(cost_It_1),
     .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE 
 
@@ -72,12 +73,13 @@ module Vending_Machine (
             req_amt <= 0;
             en_for_change <= 0;
             rst_counter <= 0;
+            internal_reset <= 1;
         end
 
         //Here all main things happen (Remember no putting multiple denominations at once)
         else if(en) begin
 
-            internal_reset <= rst;
+            internal_reset <= 0;
             current_state <= next_state;
 
         end
@@ -95,7 +97,7 @@ module Vending_Machine (
             end
 
             else
-                rst_counter = rst_counter + 1;
+                rst_counter <= rst_counter + 1;
         end
 
         // Dont know if this is needed (not sure)
@@ -111,7 +113,7 @@ module Vending_Machine (
     //Combinational Logic always block
     always @(*) begin
     
-        case(state) 
+        case(current_state) 
                 S0:
                     if(Five_in) begin
                         next_state = S5;
@@ -184,9 +186,6 @@ module Vending_Machine (
                     else if(Ten_in) begin
                         next_state = S35;
                     end
-                    else if(Twenty_in) begin
-                        next_state = S45;
-                    end
                     else
                         next_state = S25;
 
@@ -197,21 +196,12 @@ module Vending_Machine (
                     else if(Ten_in) begin
                         next_state = S40;
                     end
-                    else if(Twenty_in) begin
-                        next_state = S50;
-                    end
                     else
                         next_state = S30;
 
                 S35:
                     if(Five_in) begin
                         next_state = S40;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S45;
-                    end
-                    else if(Twenty_in) begin
-                        next_state = S55;
                     end
                     else
                         next_state = S35;

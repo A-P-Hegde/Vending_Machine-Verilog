@@ -1,0 +1,5 @@
+-Add a Module to return the amount inserted after max item cost is reached
+-Add comb circuit to calculate total amount
+-Add module to know what are the denominations of currency left in the machine
+-Change integer division by repeated subtraction if possible(easy on hardware)
+-Make a TestBench

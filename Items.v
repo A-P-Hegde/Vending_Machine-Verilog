@@ -29,11 +29,11 @@ module Item (
         //Reseting
         if(rst) begin
             item_out <= 0;
-            dispense <= 0;
+            dispensed <= 0;
         end
 
         //To send output signal only for one cycle
-        else if(en1 && en2 && (amount_in > cost) && !(dispensed)) begin
+        else if(en1 && en2 && (amount_in >= cost) && !(dispensed)) begin
             item_out <= 1'b1;
         end
 
@@ -41,7 +41,7 @@ module Item (
         else begin
             item_out <= 0;
             if (!en1) begin
-                dispense <= 0;
+                dispensed <= 0;
             end
         end
             
