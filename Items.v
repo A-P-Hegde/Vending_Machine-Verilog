@@ -1,5 +1,6 @@
-module Item1 (
+module Item (
     clk,rst,en1,en2,
+    cost,
     amount_in,item_out
 );
     //Basic inputs
@@ -20,7 +21,7 @@ module Item1 (
     reg dispensed;
 
     //Cost of item
-    parameter cost = 25;
+    input [7:0] cost;
 
     //always block 
     always @(posedge clk or posedge rst) begin
