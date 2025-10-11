@@ -3,7 +3,7 @@ module Vending_Machine (
     select_item,
     Five_in,Ten_in,Twenty_in,
     Five_out,Ten_out,Twenty_out,
-    item_out,
+    item_out
 );
     //-----------------------------------------------------------------------------------//
 
@@ -11,17 +11,17 @@ module Vending_Machine (
     input clk,rst,en;
     input [1:0] select_item;
     input [7:0] Five_in,Ten_in,Twenty_in;
-    output [7:0] Five_out,Ten_out,Twenty_out;
-    output item_out;
+    output reg [7:0] Five_out,Ten_out,Twenty_out;
+    output reg item_out;
 
     //Wires needed for other modules
-    wire [7:0] req_amt;
-    wire [7:0] amount_in;
-    wire enable_dispense;
-    wire en_for_change;
-    wire en_for_item1,en_for_item2,en_for_item3;
-    wire [3:0] rst_counter;
-    wire internal_reset;   //To reset machine after a few cycles after item given 
+    reg [7:0] req_amt;
+    reg [7:0] amount_in;
+    reg enable_dispense;
+    reg en_for_change;
+    reg en_for_item1,en_for_item2,en_for_item3;
+    reg [3:0] rst_counter;
+    reg internal_reset;   //To reset machine after a few cycles after item given 
                                    //To use as reset for instantiated blocks
     
     //State wire
@@ -47,11 +47,11 @@ module Vending_Machine (
     .cost(cost_It_1),
     .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE
 
-    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item_2),.en2(enable_dispense),
+    Item it2(.clk(clk),.rst(internal_reset),.en1(en_for_item_2),.en2(enable_dispense),
     .cost(cost_It_2),
     .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE
 
-    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item_3),.en2(enable_dispense),
+    Item it3(.clk(clk),.rst(internal_reset),.en1(en_for_item_3),.en2(enable_dispense),
     .cost(cost_It_3),
     .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE 
 
@@ -87,28 +87,126 @@ module Vending_Machine (
             en_for_item_3 <= 0;
             en_for_change <= 0;
             amount_in <= 0;
-            select_item <= 0;
             internal_reset <= 1;
         end
 
         //Here all main things happen 
         else if(en) begin
+                //(Remember no putting multiple denominations at once)
+            case(current_state) 
+            S0:
+                if(Five_in) begin
+                    next_state <= S5;
+                end
+                else if(Ten_in) begin
+                    next_state <= S10;
+                end
+                else if(Twenty_in) begin
+                    next_state <= S20;
+                end
+                else
+                    next_state <= S0;
+
+            S5:
+                if(Five_in) begin
+                    next_state <= S10;
+                end
+                else if(Ten_in) begin
+                    next_state <= S15;
+                end
+                else if(Twenty_in) begin
+                    next_state <= S25;
+                end
+                else
+                    next_state <= S5;
             
+            S10:
+                if(Five_in) begin
+                    next_state <= S15;
+                end
+                else if(Ten_in) begin
+                    next_state <= S20;
+                end
+                else if(Twenty_in) begin
+                    next_state <= S30;
+                end
+                else
+                    next_state <= S10;
+
+            S15:
+                if(Five_in) begin
+                    next_state <= S20;
+                end
+                else if(Ten_in) begin
+                    next_state <= S25;
+                end
+                else if(Twenty_in) begin
+                    next_state <= S35;
+                end
+                else
+                    next_state <= S15;
+            
+            S20:
+                if(Five_in) begin
+                    next_state <= S25;
+                end
+                else if(Ten_in) begin
+                    next_state <= S30;
+                end
+                else if(Twenty_in) begin
+                    next_state <= S40;
+                end
+                else
+                    next_state <= S20;
+
+            S25:
+                if(Five_in) begin
+                    next_state <= S30;
+                end
+                else if(Ten_in) begin
+                    next_state <= S35;
+                end
+                else
+                    next_state <= S25;
+
+            S30:
+                if(Five_in) begin
+                    next_state <= S35;
+                end
+                else if(Ten_in) begin
+                    next_state <= S40;
+                end
+                else
+                    next_state <= S30;
+
+            S35:
+                if(Five_in) begin
+                    next_state <= S40;
+                end
+                else
+                    next_state <= S35;
+            S40:
+                next_state <= S40;
+            default:
+                next_state = S0;
+                
+        endcase
+
             //To enable which item to select
             case(select_item)
                 default:
                     en_for_item1 <= 0;
                     en_for_item2 <= 0;
                     en_for_item3 <= 0;
-                4'd1:
+                2'd1:
                     en_for_item1 <= 1;
                     en_for_item2 <= 0;
                     en_for_item3 <= 0;
-                4'd2:
+                2'd2:
                     en_for_item1 <= 0;
                     en_for_item2 <= 1;
                     en_for_item3 <= 0;
-                4'd3:
+                2'd3:
                     en_for_item1 <= 0;
                     en_for_item2 <= 0;
                     en_for_item3 <= 1;
@@ -118,10 +216,13 @@ module Vending_Machine (
             internal_reset <= 0;
             current_state <= next_state;
 
-            if(amount_in >= cost_It_1) begin
-                req_amt <= amount_in - cost_It_1;
-                en_for_change <= 1;
-            end
+            case(select_item)
+                2'd1: req_amt <= amount_in - cost_It_1; en_for_item1 <= 1;
+                2'd2: req_amt <= amount_in - cost_It_2; en_for_item2 <= 1;
+                2'd3: req_amt <= amount_in - cost_It_3; en_for_item3 <= 1;
+                default: req_amt <= 0;
+            endcase
+
             
 
         end
@@ -141,7 +242,6 @@ module Vending_Machine (
                 en_for_item_3 <= 0;
                 en_for_change <= 0;
                 amount_in <= 0;
-                select_item <= 0;
                 internal_reset <= 1;
             end
 
@@ -160,110 +260,6 @@ module Vending_Machine (
 
     //-----------------------------------------------------------------------------------//
 
-    //Combinational Logic always block
-    always @(*) begin
-    //(Remember no putting multiple denominations at once)
-        case(current_state) 
-            S0:
-                if(Five_in) begin
-                    next_state = S5;
-                end
-                else if(Ten_in) begin
-                    next_state = S10;
-                end
-                else if(Twenty_in) begin
-                    next_state = S20;
-                end
-                else
-                    next_state = S0;
-
-            S5:
-                if(Five_in) begin
-                    next_state = S10;
-                end
-                else if(Ten_in) begin
-                    next_state = S15;
-                end
-                else if(Twenty_in) begin
-                    next_state = S25;
-                end
-                else
-                    next_state = S5;
-            
-            S10:
-                if(Five_in) begin
-                    next_state = S15;
-                end
-                else if(Ten_in) begin
-                    next_state = S20;
-                end
-                else if(Twenty_in) begin
-                    next_state = S30;
-                end
-                else
-                    next_state = S10;
-
-            S15:
-                if(Five_in) begin
-                    next_state = S20;
-                end
-                else if(Ten_in) begin
-                    next_state = S25;
-                end
-                else if(Twenty_in) begin
-                    next_state = S35;
-                end
-                else
-                    next_state = S15;
-            
-            S20:
-                if(Five_in) begin
-                    next_state = S25;
-                end
-                else if(Ten_in) begin
-                    next_state = S30;
-                end
-                else if(Twenty_in) begin
-                    next_state = S40;
-                end
-                else
-                    next_state = S20;
-
-            S25:
-                if(Five_in) begin
-                    next_state = S30;
-                end
-                else if(Ten_in) begin
-                    next_state = S35;
-                end
-                else
-                    next_state = S25;
-
-            S30:
-                if(Five_in) begin
-                    next_state = S35;
-                end
-                else if(Ten_in) begin
-                    next_state = S40;
-                end
-                else
-                    next_state = S30;
-
-            S35:
-                if(Five_in) begin
-                    next_state = S40;
-                end
-                else
-                    next_state = S35;
-
-            S40: //This shoud be the limit User should not put more money than this (NOT COMPLETED)
-
-            default:
-                next_state = S0;
-                
-        endcase
-
-    end
 
     //-----------------------------------------------------------------------------------//
 
