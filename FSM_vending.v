@@ -9,7 +9,7 @@ module Vending_Machine (
 
     //Defining of the ports wires
     input clk,rst,en;
-    input [3:0] select_item;
+    input [1:0] select_item;
     input [7:0] Five_in,Ten_in,Twenty_in;
     output [7:0] Five_out,Ten_out,Twenty_out;
     output item_out;
@@ -19,7 +19,7 @@ module Vending_Machine (
     wire [7:0] amount_in;
     wire enable_dispense;
     wire en_for_change;
-    wire en_for_items;
+    wire en_for_item1,en_for_item2,en_for_item3;
     wire [3:0] rst_counter;
     wire internal_reset;   //To reset machine after a few cycles after item given 
                                    //To use as reset for instantiated blocks
@@ -28,7 +28,9 @@ module Vending_Machine (
     wire [8:0]current_state,next_state;
 
     //Item Cost Wire
-    parameter cost_It_1 = 20;    //Code is made for max cost of item being 20
+    parameter cost_It_1 = 20,
+                    cost_It_2 = 15,
+                    cost_It_3 = 10;    //Code is made for max cost of item being 20
                                               //Just add more states to make max cost more
                                               //max cost should be <= largest money state - 20 
     //-----------------------------------------------------------------------------------//
@@ -41,8 +43,16 @@ module Vending_Machine (
     .Five_out(Five_out),.Ten_out(Ten_out),.Twenty_out(Twenty_out),
     .enable_dispense(enable_dispense));
 
-    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_items),.en2(enable_dispense),
+    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item_1),.en2(enable_dispense),
     .cost(cost_It_1),
+    .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE
+
+    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item_2),.en2(enable_dispense),
+    .cost(cost_It_2),
+    .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE
+
+    Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item_3),.en2(enable_dispense),
+    .cost(cost_It_3),
     .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE 
 
     //-----------------------------------------------------------------------------------//
@@ -71,16 +81,39 @@ module Vending_Machine (
             Twenty_out <= 0;
             item_out <= 0;
             req_amt <= 0;
-            en_for_change <= 0;
             rst_counter <= 0;
-            en_for_items <= 0;
+            en_for_item_1 <= 0;
+            en_for_item_2 <= 0;
+            en_for_item_3 <= 0;
             en_for_change <= 0;
             amount_in <= 0;
+            select_item <= 0;
             internal_reset <= 1;
         end
 
         //Here all main things happen 
         else if(en) begin
+            
+            //To enable which item to select
+            case(select_item)
+                default:
+                    en_for_item1 <= 0;
+                    en_for_item2 <= 0;
+                    en_for_item3 <= 0;
+                4'd1:
+                    en_for_item1 <= 1;
+                    en_for_item2 <= 0;
+                    en_for_item3 <= 0;
+                4'd2:
+                    en_for_item1 <= 0;
+                    en_for_item2 <= 1;
+                    en_for_item3 <= 0;
+                4'd3:
+                    en_for_item1 <= 0;
+                    en_for_item2 <= 0;
+                    en_for_item3 <= 1;
+
+            endcase
 
             internal_reset <= 0;
             current_state <= next_state;
@@ -102,11 +135,13 @@ module Vending_Machine (
                 Twenty_out <= 0;
                 item_out <= 0;
                 req_amt <= 0;
-                en_for_change <= 0;
                 rst_counter <= 0;
-                en_for_items <= 0;
+                en_for_item_1 <= 0;
+                en_for_item_2 <= 0;
+                en_for_item_3 <= 0;
                 en_for_change <= 0;
                 amount_in <= 0;
+                select_item <= 0;
                 internal_reset <= 1;
             end
 
@@ -236,32 +271,35 @@ module Vending_Machine (
 
     always @(*) begin
         case(current_state)
-        S0:
-            amount_in <= 0;
+            S0:
+                amount_in <= 0;
 
-        S0:
-            amount_in <= 0;
-        
-        S10:
-            amount_in <= 10;
+            S5:
+                amount_in <= 5;
+            
+            S10:
+                amount_in <= 10;
 
-        S15:
-            amount_in <= 15;
+            S15:
+                amount_in <= 15;
 
-        S20:
-            amount_in <= 20;
+            S20:
+                amount_in <= 20;
 
-        S25:
-            amount_in <= 25;
+            S25:
+                amount_in <= 25;
 
-        S30:
-            amount_in <= 30;
+            S30:
+                amount_in <= 30;
 
-        S35:
-            amount_in <= 35;
+            S35:
+                amount_in <= 35;
 
-        S40:
-            amount_in <= 40;
+            S40:
+                amount_in <= 40;
+            
+            default:
+                amount_in <= 0;
         endcase
     end
     //-----------------------------------------------------------------------------------//
