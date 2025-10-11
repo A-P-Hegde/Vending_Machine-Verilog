@@ -73,31 +73,46 @@ module Vending_Machine (
             req_amt <= 0;
             en_for_change <= 0;
             rst_counter <= 0;
+            en_for_items <= 0;
+            en_for_change <= 0;
+            amount_in <= 0;
             internal_reset <= 1;
         end
 
-        //Here all main things happen (Remember no putting multiple denominations at once)
+        //Here all main things happen 
         else if(en) begin
 
             internal_reset <= 0;
             current_state <= next_state;
 
+            if(amount_in >= cost_It_1) begin
+                req_amt <= amount_in - cost_It_1;
+                en_for_change <= 1;
+            end
+            
+
         end
 
         //Resetting after item out
         else if(item_out) begin
+
             if(rst_counter == 4) begin    
                 Five_out <= 0;
                 Ten_out <= 0;
                 Twenty_out <= 0;
                 item_out <= 0;
                 req_amt <= 0;
+                en_for_change <= 0;
                 rst_counter <= 0;
-                internal_reset <= 1
+                en_for_items <= 0;
+                en_for_change <= 0;
+                amount_in <= 0;
+                internal_reset <= 1;
             end
 
             else
                 rst_counter <= rst_counter + 1;
+
         end
 
         // Dont know if this is needed (not sure)
@@ -112,107 +127,144 @@ module Vending_Machine (
 
     //Combinational Logic always block
     always @(*) begin
-    
+    //(Remember no putting multiple denominations at once)
         case(current_state) 
-                S0:
-                    if(Five_in) begin
-                        next_state = S5;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S10;
-                    end
-                    else if(Twenty_in) begin
-                        next_state = S20;
-                    end
-                    else
-                        next_state = S0;
-
-                S5:
-                    if(Five_in) begin
-                        next_state = S10;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S15;
-                    end
-                    else if(Twenty_in) begin
-                        next_state = S25;
-                    end
-                    else
-                        next_state = S5;
-                
-                S10:
-                    if(Five_in) begin
-                        next_state = S15;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S20;
-                    end
-                    else if(Twenty_in) begin
-                        next_state = S30;
-                    end
-                    else
-                        next_state = S10;
-
-                S15:
-                    if(Five_in) begin
-                        next_state = S20;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S25;
-                    end
-                    else if(Twenty_in) begin
-                        next_state = S35;
-                    end
-                    else
-                        next_state = S15;
-                
-                S20:
-                    if(Five_in) begin
-                        next_state = S25;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S30;
-                    end
-                    else if(Twenty_in) begin
-                        next_state = S40;
-                    end
-                    else
-                        next_state = S20;
-
-                S25:
-                    if(Five_in) begin
-                        next_state = S30;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S35;
-                    end
-                    else
-                        next_state = S25;
-
-                S30:
-                    if(Five_in) begin
-                        next_state = S35;
-                    end
-                    else if(Ten_in) begin
-                        next_state = S40;
-                    end
-                    else
-                        next_state = S30;
-
-                S35:
-                    if(Five_in) begin
-                        next_state = S40;
-                    end
-                    else
-                        next_state = S35;
-
-                S40: //This shoud be the limit User should not put more money than this (NOT COMPLETED)
-
-                default:
+            S0:
+                if(Five_in) begin
+                    next_state = S5;
+                end
+                else if(Ten_in) begin
+                    next_state = S10;
+                end
+                else if(Twenty_in) begin
+                    next_state = S20;
+                end
+                else
                     next_state = S0;
+
+            S5:
+                if(Five_in) begin
+                    next_state = S10;
+                end
+                else if(Ten_in) begin
+                    next_state = S15;
+                end
+                else if(Twenty_in) begin
+                    next_state = S25;
+                end
+                else
+                    next_state = S5;
+            
+            S10:
+                if(Five_in) begin
+                    next_state = S15;
+                end
+                else if(Ten_in) begin
+                    next_state = S20;
+                end
+                else if(Twenty_in) begin
+                    next_state = S30;
+                end
+                else
+                    next_state = S10;
+
+            S15:
+                if(Five_in) begin
+                    next_state = S20;
+                end
+                else if(Ten_in) begin
+                    next_state = S25;
+                end
+                else if(Twenty_in) begin
+                    next_state = S35;
+                end
+                else
+                    next_state = S15;
+            
+            S20:
+                if(Five_in) begin
+                    next_state = S25;
+                end
+                else if(Ten_in) begin
+                    next_state = S30;
+                end
+                else if(Twenty_in) begin
+                    next_state = S40;
+                end
+                else
+                    next_state = S20;
+
+            S25:
+                if(Five_in) begin
+                    next_state = S30;
+                end
+                else if(Ten_in) begin
+                    next_state = S35;
+                end
+                else
+                    next_state = S25;
+
+            S30:
+                if(Five_in) begin
+                    next_state = S35;
+                end
+                else if(Ten_in) begin
+                    next_state = S40;
+                end
+                else
+                    next_state = S30;
+
+            S35:
+                if(Five_in) begin
+                    next_state = S40;
+                end
+                else
+                    next_state = S35;
+
+            S40: //This shoud be the limit User should not put more money than this (NOT COMPLETED)
+
+            default:
+                next_state = S0;
                 
         endcase
 
     end
+
+    //-----------------------------------------------------------------------------------//
+
+    //Combinational circuit for amount in
+
+    always @(*) begin
+        case(current_state)
+        S0:
+            amount_in <= 0;
+
+        S0:
+            amount_in <= 0;
+        
+        S10:
+            amount_in <= 10;
+
+        S15:
+            amount_in <= 15;
+
+        S20:
+            amount_in <= 20;
+
+        S25:
+            amount_in <= 25;
+
+        S30:
+            amount_in <= 30;
+
+        S35:
+            amount_in <= 35;
+
+        S40:
+            amount_in <= 40;
+        endcase
+    end
+    //-----------------------------------------------------------------------------------//
+
     
 endmodule
