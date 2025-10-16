@@ -3,3 +3,4 @@
 -Add module to know what are the denominations of currency left in the machine
 -Change integer division by repeated subtraction if possible(easy on hardware)
 -Make a TestBench
+-IN MAIN MODULE THERE IS AN ERROR IN LOGIC IN USING FIVE_IN,FIVE_OUT .... make another parameter to keep count of how many total five in....
