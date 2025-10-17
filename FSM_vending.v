@@ -17,9 +17,15 @@ module Vending_Machine (
     //Regs needed for other modules
     reg [7:0] req_amt;
     reg [7:0] amount_in;
+    reg [7:0] Five_out_change;
+    reg [7:0] Five_out_overflow;
+    reg [7:0] Ten_out_change;
+    reg [7:0] Ten_out_overflow;
+    reg [7:0] Twenty_out_change;
+    reg [7:0] Twenty_out_overflow;
     reg enable_dispense;
     reg en_for_change;
-    reg en_for_returnmoney_after_max;
+    reg en_for_overflow;
     reg en_for_item1,en_for_item2,en_for_item3;
     reg [3:0] rst_counter;
     reg internal_reset;   //To reset machine after a few cycles after item given 
@@ -50,7 +56,7 @@ module Vending_Machine (
     Change_remaining ch(.clk(clk),.rst(internal_reset),.en(en_for_change),
     .req_amt(req_amt),                                             //NOT COMPLETED INSTANTIATION (missing ports)!!!!
     .Five_in(Five_in_total),.Ten_in(Ten_in_total),.Twenty_in(Twenty_in_total),
-    .Five_out(Five_out),.Ten_out(Ten_out),.Twenty_out(Twenty_out),
+    .Five_out(Five_out_change),.Ten_out(Ten_out_change),.Twenty_out(Twenty_out_change),
     .enable_dispense(enable_dispense));
 
     Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item_1),.en2(enable_dispense),
@@ -65,6 +71,9 @@ module Vending_Machine (
     .cost(cost_It_3),
     .amount_in(amount_in),.item_out(item_out));     //THIS IS COMPLETE 
 
+    Overflow_return ov(.clk(clk),.rst(internal_reset),.en(),
+    .Five_in(Five_in),.Ten_in(Ten_in),.Twenty_in(Twenty_in),
+    .Five_out(Five_out_overflow),.Ten_out(Ten_out_overflow),.Twenty_out(Twenty_out_overflow))
     //-----------------------------------------------------------------------------------//
 
     //Define States Here
@@ -98,7 +107,7 @@ module Vending_Machine (
             en_for_change <= 0;
             amount_in <= 0;
             internal_reset <= 1;
-            en_for_returnmoney_after_max <= 0;
+            en_for_overflow <= 0;
         end
 
         //Here all main things happen 
@@ -195,7 +204,7 @@ module Vending_Machine (
                     next_state <= S40;
                 end
                 else if(Ten_in) begin
-                    en_for_returnmoney_after_max <= 1;
+                    en_for_overflow <= 1;
                 end
                 else
                     next_state <= S30;
@@ -203,14 +212,14 @@ module Vending_Machine (
                     next_state <= S35;
             S40:
             if(Five_in | Ten_in | Twenty_in) begin
-                en_for_returnmoney_after_max <= 1;
+                en_for_overflow <= 1;
                 next_state <= S40;
             end
             else
                 next_state <= S40;  //Make a logic to not accecpt money after 40
 
             default:
-                en_for_returnmoney_after_max <= 0;
+                en_for_overflow <= 0;
                 next_state = S0;
                 
         endcase
@@ -266,7 +275,7 @@ module Vending_Machine (
                 en_for_change <= 0;
                 amount_in <= 0;
                 internal_reset <= 1;
-                en_for_returnmoney_after_max <= 0;
+                en_for_overflow <= 0;
             end
 
             else
