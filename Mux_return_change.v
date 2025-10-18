@@ -1,5 +1,5 @@
 module Mux_return_change (
-    en,rst,en1,en2,
+    rst,en1,en2,
     Overflow,Change,Out
 );
 
