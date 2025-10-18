@@ -2,12 +2,11 @@
 
 
 -Add module to know what are the denominations of currency left in the machine
--Change integer division by repeated subtraction if possible(easy on hardware)
+-Change integer division by repeated subtraction if possible(easy on hardware) (Division takes multiple clock cycles)
 -Make a TestBench
 
 
 -IN MAIN MODULE THERE IS AN ERROR IN LOGIC IN USING FIVE_IN,FIVE_OUT .... make another parameter to keep count of how many total five in....  -----DONE
 -Make a module (or directly in main) (MUX) to give one Five_out .... out of the two returning change module  -----DONE
 -Put the change state logic under "always @(Money in)"  -----DONE
-
--Keep assignment of next state in comb circuit and assigning the state to current stste in sequential 
+-Keep assignment of next state in comb circuit and assigning the state to current stste in sequential  -----DONE

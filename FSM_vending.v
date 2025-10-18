@@ -190,11 +190,15 @@ module Vending_Machine (
         //Here all main things happen (Change of states if money is input and if device is enabled)
         else if(en) begin
             
+            //Sets total amount in the machine 
             amount_in <= amount_in_next;
+
             internal_reset <= 0;
-            
+
             //Shifting the states depending on the case
             current_state <= next_state;
+
+            //Sets the enables for other module which were calculated combitnationally
             en_for_change <= en_for_change_next;
             en_for_item1 <= en_for_item1_next;
             en_for_item2 <= en_for_item2_next;
@@ -205,6 +209,7 @@ module Vending_Machine (
 
 
         // Dont know if this is needed (not sure)
+        //Want everything to be latched if enable in deactivated mid run
         //20 days later i still dont know if its needed :)
         else begin
             rst_counter <= 0;
