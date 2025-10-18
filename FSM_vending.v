@@ -46,12 +46,15 @@ module Vending_Machine (
 
     //enable for return change module
     reg en_for_change;
+    reg en_for_change_next;
 
     //enable for return overflow module
     reg en_for_overflow;
+    reg en_for_overflow_next;
 
     //enables to enable each item module
     reg en_for_item1,en_for_item2,en_for_item3;
+    reg en_for_item1_next,en_for_item2_next,en_for_item3_next;
 
     //To reset machine after a few cycles after item given 
     //To use as reset for instantiated blocks
@@ -188,13 +191,16 @@ module Vending_Machine (
         else if(en) begin
             
             amount_in <= amount_in_next;
-
+            internal_reset <= 0;
             
             //Shifting the states depending on the case
-
-            internal_reset <= 0;
             current_state <= next_state;
-            
+            en_for_change <= en_for_change_next;
+            en_for_item1 <= en_for_item1_next;
+            en_for_item2 <= en_for_item2_next;
+            en_for_item3 <= en_for_item3_next;
+            en_for_overflow <= en_for_overflow_next;
+
         end
 
 
@@ -321,7 +327,7 @@ module Vending_Machine (
                             amount_in_next = 35;
                         end
                         else if(Twenty_in) begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S25;
                             amount_in_next = 25;
                         end
@@ -342,7 +348,7 @@ module Vending_Machine (
                         else if(Twenty_in)begin
                             next_state = S30;
                             amount_in_next = 30;
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                         end
                         else begin
                             next_state = S30;
@@ -354,33 +360,33 @@ module Vending_Machine (
                             amount_in_next = 40;
                         end
                         else if(Ten_in) begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S35;
                             amount_in_next = 35;
                         end
                         else if(Twenty_in)begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S35;
                             amount_in_next = 35;
                         end
                         else  begin
                             next_state = S35;
                             amount_in_next = 35;
-                            en_for_overflow = 0;
+                            en_for_overflow_next = 0;
                         end
                     S40:
                         if(Five_in | Ten_in | Twenty_in) begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S40;
                             amount_in_next = 40;
                         end
                         else begin
                             next_state = S40;
                             amount_in_next = 40;
-                            en_for_overflow = 0;
+                            en_for_overflow_next = 0;
                         end
                     default:
-                        en_for_overflow = 0;
+                        en_for_overflow_next = 0;
                         next_state = S0;
                         amount_in_next = 0;
                         
@@ -392,38 +398,45 @@ module Vending_Machine (
             case(select_item)
                 default:
                     req_amt = 0;
-                    en_for_item1 = 0;
-                    en_for_item2 = 0;
-                    en_for_item3 = 0;
+                    en_for_change_next = 0;
+                    en_for_item1_next = 0;
+                    en_for_item2_next = 0;
+                    en_for_item3_next = 0;
                 2'd1:
                     if (amount_in_next - cost_It_1 >= 0) begin
+                        en_for_change_next = 1;
                         req_amt = amount_in_next - cost_It_1; 
-                        en_for_item1 = 1;
+                        en_for_item1_next = 1;
                     end
                         else begin
-                        en_for_item1 = 0;
-                        en_for_item2 = 0;
-                        en_for_item3 = 0;
+                        en_for_change_next = 0;
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
                     end
                 2'd2:
                     if (amount_in_next - cost_It_2 >= 0) begin
+                        en_for_change_next = 1;
                         req_amt = amount_in_next - cost_It_2; 
-                        en_for_item2 = 1;
+                        en_for_item2_next = 1;
                     end
                         else begin
-                        en_for_item1 = 0;
-                        en_for_item2 = 0;
-                        en_for_item3 = 0;
+                        en_for_change_next = 0;
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
                     end
                 2'd3:
                     if (amount_in_next - cost_It_3 >= 0) begin
+                        en_for_change_next = 1;
                         req_amt = amount_in_next - cost_It_3; 
-                        en_for_item3 = 1;
+                        en_for_item3_next = 1;
                     end
                         else begin
-                        en_for_item1 = 0;
-                        en_for_item2 = 0;
-                        en_for_item3 = 0;
+                        en_for_change_next = 0;
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
                     end
             endcase
 

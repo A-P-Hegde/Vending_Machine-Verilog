@@ -1,4 +1,7 @@
-case(current_state) 
+if(en) begin
+             //When money is input
+            if(Five_in || Ten_in || Twenty_in)begin   
+                case(current_state) 
                     S0:
                         if(Five_in) begin
                             next_state = S5;
@@ -99,7 +102,7 @@ case(current_state)
                             amount_in_next = 35;
                         end
                         else if(Twenty_in) begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S25;
                             amount_in_next = 25;
                         end
@@ -120,7 +123,7 @@ case(current_state)
                         else if(Twenty_in)begin
                             next_state = S30;
                             amount_in_next = 30;
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                         end
                         else begin
                             next_state = S30;
@@ -132,34 +135,78 @@ case(current_state)
                             amount_in_next = 40;
                         end
                         else if(Ten_in) begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S35;
                             amount_in_next = 35;
                         end
                         else if(Twenty_in)begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S35;
                             amount_in_next = 35;
                         end
                         else  begin
                             next_state = S35;
                             amount_in_next = 35;
-                            en_for_overflow = 0;
+                            en_for_overflow_next = 0;
                         end
                     S40:
                         if(Five_in | Ten_in | Twenty_in) begin
-                            en_for_overflow = 1;
+                            en_for_overflow_next = 1;
                             next_state = S40;
                             amount_in_next = 40;
                         end
                         else begin
                             next_state = S40;
                             amount_in_next = 40;
-                            en_for_overflow = 0;
+                            en_for_overflow_next = 0;
                         end
                     default:
-                        en_for_overflow = 0;
+                        en_for_overflow_next = 0;
                         next_state = S0;
                         amount_in_next = 0;
                         
                     endcase
+            end
+
+            //To enable the respective items module after user inputs item needed
+            //And also determine the req_amount which goes to the return change block
+            case(select_item)
+                default:
+                    req_amt = 0;
+                    en_for_item1_next = 0;
+                    en_for_item2_next = 0;
+                    en_for_item3_next = 0;
+                2'd1:
+                    if (amount_in_next - cost_It_1 >= 0) begin
+                        req_amt = amount_in_next - cost_It_1; 
+                        en_for_item1_next = 1;
+                    end
+                        else begin
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
+                    end
+                2'd2:
+                    if (amount_in_next - cost_It_2 >= 0) begin
+                        req_amt = amount_in_next - cost_It_2; 
+                        en_for_item2_next = 1;
+                    end
+                        else begin
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
+                    end
+                2'd3:
+                    if (amount_in_next - cost_It_3 >= 0) begin
+                        req_amt = amount_in_next - cost_It_3; 
+                        en_for_item3_next = 1;
+                    end
+                        else begin
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
+                    end
+            endcase
+
+
+        end
