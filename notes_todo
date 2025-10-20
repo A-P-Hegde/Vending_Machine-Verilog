@@ -1,5 +1,8 @@
 -Add a Module to return the amount inserted after max item cost is reached  -----DONE
 
+-Check once if the return change and overflow modules should be sequential or combinational  -----DONE
+
+-Check if req_amt also needs a req_amt_next and needs to be calculated in comb indirectly
 
 -Add module to know what are the denominations of currency left in the machine
 -Change integer division by repeated subtraction if possible(easy on hardware) (Division takes multiple clock cycles)

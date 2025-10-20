@@ -114,7 +114,7 @@ module Vending_Machine (
     Mux_return_change mx(.rst(internal_reset),.en1(en_for_change),.en2(en_for_overflow),
     .Overflow({Five_out_overflow,Ten_out_overflow,Twenty_out_overflow}),
     .Change({Five_out_change,Ten_out_change,Twenty_out_change}),
-    .Out({Five_out,Ten_out,Twenty_out}));
+    .Out({Five_out,Ten_out,Twenty_out}));  //THIS IS COMPLETE
     //-----------------------------------------------------------------------------------//
 
     //-----------------------------------------------------------------------------------//
