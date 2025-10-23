@@ -35,6 +35,12 @@ module Change_remaining (
     reg [7:0] Five_out_next, Ten_out_next, Twenty_out_next;
     reg enable_dispense_next;
 
+    //----------------------------------------------------------------------------------//
+    //Now to instantiate the module which fetches number of denominations left in machine
+
+    //----------------------------------------------------------------------------------//
+
+
     //=========================================================================
     // Sequential always block (synchronous logic)
     // Registers update on clock edge or reset
