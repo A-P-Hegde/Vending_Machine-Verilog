@@ -61,8 +61,12 @@ module Vending_Machine (
     reg [3:0] rst_counter;
     reg internal_reset;   
     
-    //To keep track of how many Five,Ten,Twenty are in the system
+    //To keep track of how many Five,Ten,Twenty are input to the system
     reg [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
+
+    //To keep track of how many Five,Ten,Twenty are already existing in the system
+    wire [7:0] Five_avl,Ten_avl,Twenty_avl;
+    wire [7:0] Five_avl_next,Ten_avl_next,Twenty_avl_next;
 
     //State reg This tells the current and next state
     //Any descision taken will be with respect to this
@@ -85,9 +89,10 @@ module Vending_Machine (
 
     //This module returns excess change and signal to dispense item
     Change_remaining ch(.clk(clk),.rst(internal_reset),.en(en_for_change),
-    .req_amt(req_amt),                                             //NOT COMPLETED INSTANTIATION (missing ports)!!!!
+    .req_amt(req_amt),.Five_avl(Five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),  // COMPLETED INSTANTIATION
     .Five_in(Five_in_total),.Ten_in(Ten_in_total),.Twenty_in(Twenty_in_total),
     .Five_out(Five_out_change),.Ten_out(Ten_out_change),.Twenty_out(Twenty_out_change),
+    .Five_avl_next(Five_avl_next), .Ten_avl_next(Ten_avl_next), .Twenty_avl_next(Twenty_avl_next),
     .enable_dispense(enable_dispense));
 
     //Instantiating item module with different item cost
@@ -115,6 +120,10 @@ module Vending_Machine (
     .Overflow({Five_out_overflow,Ten_out_overflow,Twenty_out_overflow}),
     .Change({Five_out_change,Ten_out_change,Twenty_out_change}),
     .Out({Five_out,Ten_out,Twenty_out}));  //THIS IS COMPLETE
+
+    DenominationStorage(.clk(clk), .rst(internal_reset), .w_en(enable_dispense), 
+    .five_avl(five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),
+    .new_five_avl(Five_avl_next), .new_ten_avl(Ten_avl_next), .new_twenty_avl(Twenty_avl_next) )
     //-----------------------------------------------------------------------------------//
 
     //-----------------------------------------------------------------------------------//

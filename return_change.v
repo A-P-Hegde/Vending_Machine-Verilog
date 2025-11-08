@@ -3,6 +3,7 @@ module Change_remaining (
     req_amt,
     Five_in, Ten_in, Twenty_in,
     Five_avl, Ten_avl, Twenty_avl,
+    Five_avl_next, Ten_avl_next, Twenty_avl_next,
     Five_out, Ten_out, Twenty_out,
     enable_dispense
 );
@@ -15,6 +16,9 @@ module Change_remaining (
 
     // These are the denominations to be given back to user
     output reg [7:0] Five_out, Ten_out, Twenty_out;
+
+    //These are the remaining denominations in the machine these are to be given as output to storage module via top module
+    output reg [7:0] Five_avl_next , Ten_avl_next , Twenty_avl_next;
 
     // This is to enable the Item modules to say whether to dispense or not
     output reg enable_dispense; 
@@ -145,6 +149,9 @@ module Change_remaining (
                 Five_out_next = temp_five_next;
                 Ten_out_next = temp_ten_next;
                 Twenty_out_next = temp_twenty_next;
+                Five_avl_next = Five_avl - temp_five_next;
+                Ten_avl_next = Ten_avl_avl - temp_ten_next;
+                Twenty_avl_next = Twenty_avl_avl - temp_twenty_next;
                 enable_dispense_next = 1'b1;
             end
 
@@ -152,6 +159,9 @@ module Change_remaining (
                 Five_out_next = Five_in;
                 Ten_out_next = Ten_in;
                 Twenty_out_next = Twenty_in;
+                Five_avl_next = Five_avl;
+                Ten_avl_next = Ten_avl_avl;
+                Twenty_avl_next = Twenty_avl_avl;
                 enable_dispense_next = 1'b0;
             end
         end
