@@ -14,15 +14,26 @@ module Overflow_return (
     //To output the value back
     output reg Five_out,Ten_out,Twenty_out;
 
+    reg rst_counter;
+
     always @(posedge clk)
         
         if(rst) begin
             Five_out <= 0;
             Ten_out <= 0;
             Twenty_out <= 0;
+            rst_counter <= 0;
+        end
+
+        else if(rst_counter == 1) begin
+            Five_out <= 0;
+            Ten_out <= 0;
+            rst_counter <= 0;
+            Twenty_out <= 0;
         end
 
         else if (en) begin
+            rst_counter = rst_counter +1;
             Five_out <= Five_in;
             Ten_out <= Ten_in;
             Twenty_out <= Twenty_in;
