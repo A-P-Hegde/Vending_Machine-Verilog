@@ -8,8 +8,8 @@ module Mux_return_change (
 //Simillarly change
 //Out is the multiplexed output
 
-    input [2:0] Overflow,Change;
-    output [2:0] Out;
+    input [23:0] Overflow,Change;
+    output reg [23:0] Out;
 
     always @(*)
         if(rst) begin
@@ -19,6 +19,6 @@ module Mux_return_change (
             if(en1)
                 Out <= Change;
             else if(en2)
-                Out <= Overflow
+                Out <= Overflow;
         end
 endmodule

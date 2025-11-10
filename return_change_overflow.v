@@ -8,7 +8,7 @@ module Overflow_return (
 );
 
     //All input and output ports needed
-    input en,clk rst;
+    input en,clk,rst;
     //Inputs the current input value by user 
     input Five_in,Ten_in,Twenty_in;
     //To output the value back

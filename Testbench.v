@@ -1,3 +1,316 @@
+module Change_remaining (
+    clk, en, rst,
+    req_amt,
+    Five_in, Ten_in, Twenty_in,
+    Five_avl, Ten_avl, Twenty_avl,
+    Five_avl_next, Ten_avl_next, Twenty_avl_next,
+    Five_out, Ten_out, Twenty_out,
+    enable_dispense
+);
+
+    // This is the money the user gives to the vending machine
+    input [7:0] Five_in, Ten_in, Twenty_in;
+
+    // These are the denominations available in the machine
+    input [7:0] Five_avl, Ten_avl, Twenty_avl;
+
+    // These are the denominations to be given back to user
+    output reg [7:0] Five_out, Ten_out, Twenty_out;
+
+    //These are the remaining denominations in the machine these are to be given as output to storage module via top module
+    output reg [7:0] Five_avl_next , Ten_avl_next , Twenty_avl_next;
+
+    // This is to enable the Item modules to say whether to dispense or not
+    output reg enable_dispense; 
+
+    // This is the requested value to be given
+    input [7:0] req_amt;
+
+    // Clock, enable, and reset signals
+    input clk, en, rst;
+
+    // These are secondary memory needed for logic (registered values)
+    reg [7:0] amt;
+    reg [7:0] temp_five, temp_ten, temp_twenty;
+
+    // These are the combinational "next" values for next-state logic
+    reg [7:0] amt_next;
+    reg [7:0] temp_five_next, temp_ten_next, temp_twenty_next;
+    reg [7:0] Five_out_next, Ten_out_next, Twenty_out_next;
+    reg enable_dispense_next;
+
+    //----------------------------------------------------------------------------------//
+    //Now to instantiate the module which fetches number of denominations left in machine
+
+    //----------------------------------------------------------------------------------//
+
+
+    //=========================================================================
+    // Sequential always block (synchronous logic)
+    // Registers update on clock edge or reset
+    //=========================================================================
+    always @(posedge clk or posedge rst) begin
+
+        if (rst) begin
+            Five_out <= 0;
+            Ten_out <= 0;
+            Twenty_out <= 0;
+            enable_dispense <= 0;
+            amt <= 0;
+            temp_five <= 0;
+            temp_ten <= 0;
+            temp_twenty <= 0;
+        end
+
+        else if (en) begin
+            // Update all registers with next-state values
+            Five_out <= Five_out_next;
+            Ten_out <= Ten_out_next;
+            Twenty_out <= Twenty_out_next;
+            enable_dispense <= enable_dispense_next;
+
+            amt <= amt_next;
+            temp_five <= temp_five_next;
+            temp_ten <= temp_ten_next;
+            temp_twenty <= temp_twenty_next;
+        end
+
+    end
+
+    //=========================================================================
+    // For this to be synthesizable, the combinational logic below must execute
+    // within one clock cycle (i.e., between two consecutive posedges of clk).
+    // There is a limit to how fast the clock can be for this logic to settle.
+    //=========================================================================
+
+    //=========================================================================
+    // Combinational always block (next-state logic)
+    //=========================================================================
+    always @(*) begin
+
+        // Default assignments to prevent latches
+        amt_next = req_amt;
+        temp_five_next = 0;
+        temp_ten_next = 0;
+        temp_twenty_next = 0;
+        Five_out_next = Five_in;
+        Ten_out_next = Ten_in;
+        Twenty_out_next = Twenty_in;
+        enable_dispense_next = 0;
+
+        // If reset is active, clear everything
+        if (rst) begin
+            amt_next = 0;
+            temp_five_next = 0;
+            temp_ten_next = 0;
+            temp_twenty_next = 0;
+            Five_out_next = 0;
+            Ten_out_next = 0;
+            Twenty_out_next = 0;
+            enable_dispense_next = 0;
+        end
+
+        // When enabled, calculate denominations
+        else if (en) begin
+
+            // Calculating the denominations to give out and the number
+            // Giving higher denominations first preference
+
+            // --- 20-unit denominations ---
+            if (amt_next >= 20 && Twenty_avl > 0) begin
+                temp_twenty_next = ((amt_next / 20) < Twenty_avl) ? (amt_next / 20) : Twenty_avl;
+                amt_next = amt_next - temp_twenty_next * 20;
+            end
+            else begin
+                temp_twenty_next = 0;
+            end
+
+            // --- 10-unit denominations ---
+            if (amt_next >= 10 && Ten_avl > 0) begin 
+                temp_ten_next = ((amt_next / 10) < Ten_avl) ? (amt_next / 10) : Ten_avl;
+                amt_next = amt_next - temp_ten_next * 10;
+            end
+            else begin
+                temp_ten_next = 0;
+            end
+
+            // --- 5-unit denominations ---
+            if (amt_next >= 5 && Five_avl > 0) begin 
+                temp_five_next = ((amt_next / 5) < Five_avl) ? (amt_next / 5) : Five_avl;
+                amt_next = amt_next - temp_five_next * 5;
+            end
+            else begin
+                temp_five_next = 0;
+            end
+
+            // If available denominations satisfy the needed amt,
+            // then we give out the change, else give user their money back and no product
+            if (amt_next == 0) begin
+                Five_out_next = temp_five_next;
+                Ten_out_next = temp_ten_next;
+                Twenty_out_next = temp_twenty_next;
+                Five_avl_next = Five_avl - temp_five_next;
+                Ten_avl_next = Ten_avl_avl - temp_ten_next;
+                Twenty_avl_next = Twenty_avl_avl - temp_twenty_next;
+                enable_dispense_next = 1'b1;
+            end
+
+            else begin
+                Five_out_next = Five_in;
+                Ten_out_next = Ten_in;
+                Twenty_out_next = Twenty_in;
+                Five_avl_next = Five_avl;
+                Ten_avl_next = Ten_avl_avl;
+                Twenty_avl_next = Twenty_avl_avl;
+                enable_dispense_next = 1'b0;
+            end
+        end
+    end
+
+endmodule
+
+//This module is used to return any money given by the user when they input money after the max limit is reached
+//Here its 40 cuz our last state is S40 
+
+module Overflow_return (
+    clk,rst,en,
+    Five_in,Ten_in,Twenty_in,
+    Five_out,Ten_out,Twenty_out
+);
+
+    //All input and output ports needed
+    input en,clk rst;
+    //Inputs the current input value by user 
+    input Five_in,Ten_in,Twenty_in;
+    //To output the value back
+    output reg Five_out,Ten_out,Twenty_out;
+
+    always @(posedge clk)
+        
+        if(rst) begin
+            Five_out <= 0;
+            Ten_out <= 0;
+            Twenty_out <= 0;
+        end
+
+        else if (en) begin
+            Five_out <= Five_in;
+            Ten_out <= Ten_in;
+            Twenty_out <= Twenty_in;
+        end
+endmodule
+module Mux_return_change (
+    rst,en1,en2,
+    Overflow,Change,Out
+);
+
+//This is a module to multiplex the outputs of two modules both of which return money to user
+//Overflow represents money out from overflow module 
+//Simillarly change
+//Out is the multiplexed output
+
+    input [2:0] Overflow,Change;
+    output [2:0] Out;
+
+    always @(*)
+        if(rst) begin
+            Out <= 0;
+        end
+        else begin
+            if(en1)
+                Out <= Change;
+            else if(en2)
+                Out <= Overflow
+        end
+endmodule
+module Item (
+    clk,rst,en1,en2,
+    cost,
+    amount_in,item_out
+);
+    //Basic inputs
+    input clk,rst,en1,en2; 
+
+    //-------------------------------------------------------------------------------------------//
+     //Enable 1 is from main module (Vending machien) which selects item
+     //Enable 2 is from Change_remaining module which tells if change is availabe to give back and if should be dispensed
+    //-------------------------------------------------------------------------------------------//
+
+    //total amount input
+    input [7:0] amount_in;
+
+    //to send out signal or no
+    output reg item_out;
+
+    //to check if already dispensed or no
+    reg dispensed;
+
+    //Cost of item
+    input [7:0] cost;
+
+    //always block 
+    always @(posedge clk or posedge rst) begin
+        
+        //Reseting
+        if(rst) begin
+            item_out <= 0;
+            dispensed <= 0;
+        end
+
+        //To send output signal only for one cycle
+        else if(en1 && en2 && (amount_in >= cost) && !(dispensed)) begin
+            item_out <= 1'b1;
+        end
+
+        //To make output signal zero once dispensed reset dispensed once enable from main module becomes low
+        else begin
+            item_out <= 0;
+            if (!en1) begin
+                dispensed <= 0;
+            end
+        end
+            
+    end
+
+endmodule
+module DenominationStorage (
+    // Clock and Reset
+    input clk,            // Clock signal
+    input rst,          // Asynchronous rst
+    
+    // Inputs from the Computational Module (New Computed Values)
+    input w_en,           // Write Enable: 1 to load new values, 0 to hold
+    input [7:0] new_five_avl,
+    input [7:0] new_ten_avl,
+    input [7:0] new_twenty_avl,
+    
+    // Outputs to the Computational Module (Current Available Values)
+    output reg [7:0] five_avl,   // Current stored count of 5s
+    output reg [7:0] ten_avl,    // Current stored count of 10s
+    output reg [7:0] twenty_avl  // Current stored count of 20s
+);
+
+    // --- State Storage Logic ---
+    // This always block handles the synchronous loading of new counts 
+    // and the asynchronous rst.
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            // Asynchronous Reset: Clear all counts
+            five_avl   <= 8'd0;
+            ten_avl    <= 8'd0;
+            twenty_avl <= 8'd0;
+        end 
+        else if (w_en) begin
+            // Synchronous Write: Load the new available counts
+            // Note: All three are updated simultaneously if w_en is high
+            five_avl   <= new_five_avl;
+            ten_avl    <= new_ten_avl;
+            twenty_avl <= new_twenty_avl;
+        end
+        // If 'w_en' is 0, the counts hold their current values (five_avl <= five_avl; etc.)
+    end
+
+endmodule
 //--------------------------------------------------------------------------------------//
 //This is the main module where all modules connect and make the complete FSM
 //This module consists of: 
@@ -12,7 +325,7 @@ module Vending_Machine (
     select_item,
     Five_in,Ten_in,Twenty_in,
     Five_out,Ten_out,Twenty_out,
-    item_out3,
+    item_out3
     item_out2,
     item_out1,
     //These are the ports needed the names are self explanatory
@@ -29,7 +342,7 @@ module Vending_Machine (
 
     //Regs needed for other modules
     reg [7:0] req_amt;                                            // Total amt given by user minus cost of item
-    reg [7:0] amount_in,amount_in_next;                                         //Total amt given by user
+    reg [7:0] amount_in;                                         //Total amt given by user
     
     //Output given by return change module after getting the item
     //Output given by overflow module when excess money is given by user unnecacarily
@@ -122,7 +435,7 @@ module Vending_Machine (
     .Out({Five_out,Ten_out,Twenty_out}));  //THIS IS COMPLETE
 
     DenominationStorage(.clk(clk), .rst(internal_reset), .w_en(enable_dispense), 
-    .five_avl(Five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),
+    .five_avl(five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),
     .new_five_avl(Five_avl_next), .new_ten_avl(Ten_avl_next), .new_twenty_avl(Twenty_avl_next) )
     //-----------------------------------------------------------------------------------//
 
