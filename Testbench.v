@@ -1,107 +1,104 @@
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
 module tb_Vending_Machine;
 
   // Inputs
-  reg clk;
-  reg reset;
-  reg [1:0] item_select;
-  reg [2:0] coin_in;
+  reg clk, rst, en;
+  reg [1:0] select_item;
+  reg Five_in, Ten_in, Twenty_in;
 
   // Outputs
-  wire [3:0] change_out;
-  wire [3:0] total_out;
-  wire item_dispensed;
-  wire overflow_flag;
+  wire [7:0] Five_out, Ten_out, Twenty_out;
+  wire item_out1, item_out2, item_out3;
 
-  // Instantiate the Unit Under Test (UUT)
+  // Instantiate DUT
   Vending_Machine uut (
     .clk(clk),
-    .reset(reset),
-    .item_select(item_select),
-    .coin_in(coin_in),
-    .change_out(change_out),
-    .total_out(total_out),
-    .item_dispensed(item_dispensed),
-    .overflow_flag(overflow_flag)
+    .rst(rst),
+    .en(en),
+    .select_item(select_item),
+    .Five_in(Five_in),
+    .Ten_in(Ten_in),
+    .Twenty_in(Twenty_in),
+    .Five_out(Five_out),
+    .Ten_out(Ten_out),
+    .Twenty_out(Twenty_out),
+    .item_out1(item_out1),
+    .item_out2(item_out2),
+    .item_out3(item_out3)
   );
 
   // Clock generation
   initial begin
     clk = 0;
-    forever #5 clk = ~clk; // 100MHz clock
+    forever #5 clk = ~clk;  // 100 MHz clock
   end
 
   // Test sequence
   initial begin
-    $display("=== Vending Machine Testbench Started ===");
+    $display("==== VENDING MACHINE TEST START ====");
 
-    // Initialize inputs
-    reset = 1;
-    item_select = 2'b00;
-    coin_in = 3'b000;
-    #10;
+    // Initialize all
+    rst = 1; en = 0;
+    Five_in = 0; Ten_in = 0; Twenty_in = 0;
+    select_item = 2'b00;
+    #20;
 
-    reset = 0;
-    #10;
+    rst = 0; en = 1;
+    #20;
 
-    // Test Case 1: Insert coins worth 20 and buy item 0 (cost = 20)
-    $display("Test 1: Buying item 0 with exact change");
-    coin_in = 3'b001; // insert ₹10
-    #10;
-    coin_in = 3'b010; // insert another ₹10
-    #10;
-    coin_in = 3'b000; // stop inserting
-    item_select = 2'b00; // select item 0
+    // Test 1 — Buy item 1 (say ₹20) using 2×₹10
+    $display("Test 1: Buying item 1 with ₹20");
+    Ten_in = 1; #10; Ten_in = 0; #10;
+    Ten_in = 1; #10; Ten_in = 0; #10;
+    select_item = 2'b01;  // select item 1
+    #40;
+    select_item = 2'b00;  // deselect
     #50;
 
-    // Test Case 2: Insert ₹30 and buy item 1 (cost = 20, expect ₹10 change)
-    $display("Test 2: Buying item 1 with change expected");
-    coin_in = 3'b001; // ₹10
-    #10;
-    coin_in = 3'b010; // ₹20 total
-    #10;
-    coin_in = 3'b011; // ₹30 total
-    #10;
-    coin_in = 3'b000;
-    item_select = 2'b01;
+    // Test 2 — Insert ₹30 (₹20 + ₹10) for item 2 costing ₹20
+    $display("Test 2: Buying item 2 with ₹30");
+    Twenty_in = 1; #10; Twenty_in = 0; #10;
+    Ten_in = 1; #10; Ten_in = 0; #10;
+    select_item = 2'b10;  // select item 2
+    #60;
+    select_item = 2'b00;
     #50;
 
-    // Test Case 3: Overflow scenario (>₹40)
+    // Test 3 — Overflow: insert more than ₹40
     $display("Test 3: Overflow scenario");
-    coin_in = 3'b011; // ₹30
-    #10;
-    coin_in = 3'b011; // ₹60 total → overflow
-    #10;
-    coin_in = 3'b000;
-    #30;
-
-    // Test Case 4: Buy item 2 without enough coins
-    $display("Test 4: Insufficient coins");
-    coin_in = 3'b001; // ₹10
-    #10;
-    item_select = 2'b10; // cost maybe ₹30
+    Twenty_in = 1; #10; Twenty_in = 0; #10;
+    Twenty_in = 1; #10; Twenty_in = 0; #10;
+    Twenty_in = 1; #10; Twenty_in = 0; #10;
     #50;
 
-    // Test Case 5: Normal flow + Reset mid-operation
+    // Test 4 — Insufficient funds
+    $display("Test 4: Not enough balance");
+    Five_in = 1; #10; Five_in = 0; #10;
+    select_item = 2'b01; #40;
+    select_item = 2'b00; #30;
+
+    // Test 5 — Reset mid-transaction
     $display("Test 5: Reset during transaction");
-    coin_in = 3'b010; // ₹20
-    #10;
-    reset = 1;
-    #10;
-    reset = 0;
-    coin_in = 3'b011; // ₹30 after reset
-    item_select = 2'b10;
-    #50;
+    Ten_in = 1; #10; Ten_in = 0; #10;
+    rst = 1; #20; rst = 0;
+    Twenty_in = 1; #10; Twenty_in = 0; #10;
+    select_item = 2'b11;
+    #60;
 
-    $display("=== Testbench Completed ===");
+    $display("==== TEST COMPLETE ====");
     $finish;
   end
 
-  // Monitor signals
+  // Monitor outputs
   initial begin
-    $monitor($time, ": clk=%b reset=%b item=%b coin_in=%b total=%d change=%d disp=%b overflow=%b",
-             clk, reset, item_select, coin_in, total_out, change_out, item_dispensed, overflow_flag);
+    $monitor(
+      "t=%0t | clk=%b rst=%b en=%b sel=%b | ₹5in=%b ₹10in=%b ₹20in=%b || out ₹5=%d ₹10=%d ₹20=%d | items={1:%b,2:%b,3:%b}",
+      $time, clk, rst, en, select_item,
+      Five_in, Ten_in, Twenty_in,
+      Five_out, Ten_out, Twenty_out,
+      item_out1, item_out2, item_out3
+    );
   end
 
 endmodule
