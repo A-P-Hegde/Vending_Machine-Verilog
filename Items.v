@@ -5,7 +5,6 @@ module Item (
 );
     //Basic inputs
     input clk,rst,en1,en2; 
-
     //-------------------------------------------------------------------------------------------//
      //Enable 1 is from main module (Vending machien) which selects item
      //Enable 2 is from Change_remaining module which tells if change is availabe to give back and if should be dispensed

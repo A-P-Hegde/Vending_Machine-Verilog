@@ -160,8 +160,8 @@ module Change_remaining (
                 Ten_out_next = Ten_in;
                 Twenty_out_next = Twenty_in;
                 Five_avl_next = Five_avl;
-                Ten_avl_next = Ten_avl_avl;
-                Twenty_avl_next = Twenty_avl_avl;
+                Ten_avl_next = Ten_avl;
+                Twenty_avl_next = Twenty_avl;
                 enable_dispense_next = 1'b0;
             end
         end
