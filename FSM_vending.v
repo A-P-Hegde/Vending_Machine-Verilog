@@ -25,7 +25,7 @@ module Vending_Machine (
     input [1:0] select_item;
     input Five_in,Ten_in,Twenty_in;
     output reg [7:0] Five_out,Ten_out,Twenty_out;
-    output reg item_out1,item_out3,item_out2;
+    output wire item_out1,item_out3,item_out2;
 
     //Regs needed for other modules
     reg [7:0] req_amt;                                            // Total amt given by user minus cost of item
@@ -33,16 +33,19 @@ module Vending_Machine (
     
     //Output given by return change module after getting the item
     //Output given by overflow module when excess money is given by user unnecacarily
-    reg [7:0] Five_out_change;                                
-    reg  Five_out_overflow;                              
-    reg [7:0] Ten_out_change;
-    reg  Ten_out_overflow;
-    reg [7:0] Twenty_out_change;
-    reg  Twenty_out_overflow;
+    wire [7:0] Five_out_change;                                
+    wire  Five_out_overflow;                              
+    wire [7:0] Ten_out_change;
+    wire Ten_out_overflow;
+    wire [7:0] Twenty_out_change;
+    wire Twenty_out_overflow;
+    wire Five_out_mux;
+    wire Ten_out_mux;
+    wire Twenty_out_mux;
 
     //This is an output signal fromreturn change block so which tells to dispense item once excess money is given out
     //If no money is available in the machine to return it gives users complete money back and dosent dispense
-    reg enable_dispense;
+    wire enable_dispense;
 
     //enable for return change module
     reg en_for_change;
@@ -63,6 +66,7 @@ module Vending_Machine (
     
     //To keep track of how many Five,Ten,Twenty are input to the system
     reg [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
+    reg [7:0] Five_in_total_next,Ten_in_total_next,Twenty_in_total_next;
 
     //To keep track of how many Five,Ten,Twenty are already existing in the system
     wire [7:0] Five_avl,Ten_avl,Twenty_avl;
@@ -119,11 +123,11 @@ module Vending_Machine (
     Mux_return_change mx(.rst(internal_reset),.en1(en_for_change),.en2(en_for_overflow),
     .Overflow({Five_out_overflow,Ten_out_overflow,Twenty_out_overflow}),
     .Change({Five_out_change,Ten_out_change,Twenty_out_change}),
-    .Out({Five_out,Ten_out,Twenty_out}));  //THIS IS COMPLETE
+    .Out({Five_out_mux,Ten_out_mux,Twenty_out_mux}));  //THIS IS COMPLETE
 
     DenominationStorage(.clk(clk), .rst(internal_reset), .w_en(enable_dispense), 
     .five_avl(Five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),
-    .new_five_avl(Five_avl_next), .new_ten_avl(Ten_avl_next), .new_twenty_avl(Twenty_avl_next) )
+    .new_five_avl(Five_avl_next), .new_ten_avl(Ten_avl_next), .new_twenty_avl(Twenty_avl_next) );
     //-----------------------------------------------------------------------------------//
 
     //-----------------------------------------------------------------------------------//
@@ -207,7 +211,9 @@ module Vending_Machine (
             
             //Sets total amount in the machine 
             amount_in <= amount_in_next;
-
+            Five_in_total <= Five_in_total_next;
+            Ten_in_total <= Ten_in_total_next;
+            Twenty_in_total <= Twenty_in_total_next;
             internal_reset <= 0;
 
             //Shifting the states depending on the case
@@ -219,6 +225,11 @@ module Vending_Machine (
             en_for_item2 <= en_for_item2_next;
             en_for_item3 <= en_for_item3_next;
             en_for_overflow <= en_for_overflow_next;
+
+            Five_out <= Five_out_mux;
+            Ten_out <= Ten_out_mux;
+            Twenty_out <= Twenty_out_mux;
+
 
         end
 
@@ -242,7 +253,12 @@ module Vending_Machine (
     //Remember no putting multiple denominations at once
                 //not desigend for it
 
-    always @(*) begin
+   always @(*) begin
+
+        Five_in_total_next = Five_in_total;
+        Ten_in_total_next = Ten_in_total;
+        Twenty_in_total_next = Twenty_in_total;
+
         if(en) begin
              //When money is input
             if(Five_in || Ten_in || Twenty_in)begin   
@@ -251,17 +267,17 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S5;
                             amount_in_next = 5;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S10;
                             amount_in_next = 10;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S20;
                             amount_in_next = 20;
-                            Twenty_in_total = Twenty_in_total + 1;
+                            Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S0;
@@ -271,17 +287,17 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S10;
                             amount_in_next = 10;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S15;
                             amount_in_next = 15;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S25;
                             amount_in_next = 25;
-                            Twenty_in_total = Twenty_in_total + 1;
+                            Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S5;
@@ -291,17 +307,17 @@ module Vending_Machine (
                         if(Five_in) begin
                             amount_in_next = 15;
                             next_state = S15;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S20;
                             amount_in_next = 20;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S30;
                             amount_in_next = 30;
-                            Twenty_in_total = Twenty_in_total + 1;
+                            Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             amount_in_next = 10;
@@ -311,17 +327,17 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S20;
                             amount_in_next = 20;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S25;
                             amount_in_next = 25;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S35;
                             amount_in_next = 35;
-                            Twenty_in_total = Twenty_in_total + 1;
+                            Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S15;
@@ -331,17 +347,17 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S25;
                             amount_in_next = 25;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S30;
                             amount_in_next = 30;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S40;
                             amount_in_next = 40;
-                            Twenty_in_total = Twenty_in_total + 1;
+                            Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S20;
@@ -356,12 +372,12 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S30;
                             amount_in_next = 30;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S35;
                             amount_in_next = 35;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             en_for_overflow_next = 1;
@@ -377,12 +393,12 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S35;
                             amount_in_next = 35;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S40;
                             amount_in_next = 40;
-                            Ten_in_total = Ten_in_total + 1;
+                            Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in)begin
                             next_state = S30;
@@ -397,7 +413,7 @@ module Vending_Machine (
                         if(Five_in) begin
                             next_state = S40;
                             amount_in_next = 40;
-                            Five_in_total = Five_in_total + 1;
+                            Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             en_for_overflow_next = 1;
@@ -483,7 +499,6 @@ module Vending_Machine (
 
         end
     end
-
 
     
 endmodule

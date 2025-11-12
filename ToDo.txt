@@ -1,0 +1,3 @@
+Check the Item_outX signal its being driven by seq block in main module and by item module
+ if there is confilcting then make it same as how Five_out is made 
+ if no error change the Five_out thing to this only
