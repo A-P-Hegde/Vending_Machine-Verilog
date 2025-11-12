@@ -25,12 +25,13 @@ module Vending_Machine (
     input [1:0] select_item;
     input Five_in,Ten_in,Twenty_in;
     output reg [7:0] Five_out,Ten_out,Twenty_out;
-    output wire item_out1,item_out3,item_out2;
+    output reg item_out1,item_out3,item_out2;
 
     //Regs needed for other modules
     reg [7:0] req_amt;                                            // Total amt given by user minus cost of item
     reg [7:0] amount_in,amount_in_next;                                         //Total amt given by user
-    
+    wire item_out1_items,item_out2_itmes,item_out3_items;
+
     //Output given by return change module after getting the item
     //Output given by overflow module when excess money is given by user unnecacarily
     wire [7:0] Five_out_change;                                
@@ -103,15 +104,15 @@ module Vending_Machine (
     //i.e three different items 
     Item it1(.clk(clk),.rst(internal_reset),.en1(en_for_item1),.en2(enable_dispense),
     .cost(cost_It_1),
-    .amount_in(amount_in),.item_out(item_out1));     //THIS IS COMPLETE
+    .amount_in(amount_in),.item_out(item_out1_items));     //THIS IS COMPLETE
 
     Item it2(.clk(clk),.rst(internal_reset),.en1(en_for_item2),.en2(enable_dispense),
     .cost(cost_It_2),
-    .amount_in(amount_in),.item_out(item_out2));     //THIS IS COMPLETE
+    .amount_in(amount_in),.item_out(item_out2_itmes));     //THIS IS COMPLETE
 
     Item it3(.clk(clk),.rst(internal_reset),.en1(en_for_item3),.en2(enable_dispense),
     .cost(cost_It_3),
-    .amount_in(amount_in),.item_out(item_out3));     //THIS IS COMPLETE 
+    .amount_in(amount_in),.item_out(item_out3_items));     //THIS IS COMPLETE 
 
     //Module to directly return money given to machine if exceeds 40 
     Overflow_return ov(.clk(clk),.rst(internal_reset),.en(en_for_overflow),
@@ -229,6 +230,10 @@ module Vending_Machine (
             Five_out <= Five_out_mux;
             Ten_out <= Ten_out_mux;
             Twenty_out <= Twenty_out_mux;
+
+            item_out1 <= item_out1_items;
+            item_out3 <= item_out2_itmes;
+            item_out2 <= item_out3_items;
 
 
         end
