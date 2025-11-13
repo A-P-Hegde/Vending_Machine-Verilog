@@ -503,6 +503,27 @@ module Vending_Machine (
 
 
         end
+        
+        else if(rst) begin
+            next_state = S0;
+            
+            Five_avl_next = 0;
+            Ten_avl_next = 0;
+            Twenty_avl_next = 0;
+
+            Five_in_total_next = 0;
+            Ten_in_total_next = 0;
+            Twenty_in_total_next = 0;
+
+            amount_in_next = 0;
+
+            en_for_item1_next = 0;
+            en_for_item2_next = 0;
+            en_for_item3_next = 0;
+            en_for_change_next = 0;
+            en_for_overflow_next = 0;
+
+        end
     end
 
     

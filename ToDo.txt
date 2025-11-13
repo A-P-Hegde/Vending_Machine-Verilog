@@ -1,1 +1,0 @@
-Add default case when not enabled (or rst) in comb block of top madule
