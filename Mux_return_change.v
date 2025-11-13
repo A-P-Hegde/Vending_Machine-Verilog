@@ -7,7 +7,7 @@ module Mux_return_change (
 //Overflow represents money out from overflow module 
 //Simillarly change
 //Out is the multiplexed output
-
+    input rst,en1,en2;
     input [23:0] Overflow,Change;
     output reg [23:0] Out;
 

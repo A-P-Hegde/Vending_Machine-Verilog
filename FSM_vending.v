@@ -14,7 +14,7 @@ module Vending_Machine (
     Five_out,Ten_out,Twenty_out,
     item_out3,
     item_out2,
-    item_out1,
+    item_out1
     //These are the ports needed the names are self explanatory
 );
     //-----------------------------------------------------------------------------------//
@@ -126,8 +126,8 @@ module Vending_Machine (
     .Change({Five_out_change,Ten_out_change,Twenty_out_change}),
     .Out({Five_out_mux,Ten_out_mux,Twenty_out_mux}));  //THIS IS COMPLETE
 
-    DenominationStorage(.clk(clk), .rst(internal_reset), .w_en(enable_dispense), 
-    .five_avl(Five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),
+    DenominationStorage Deno1(.clk(clk), .rst(internal_reset), .w_en(enable_dispense), 
+    .five_avl(Five_avl), .ten_avl(Ten_avl), .twenty_avl(Twenty_avl),
     .new_five_avl(Five_avl_next), .new_ten_avl(Ten_avl_next), .new_twenty_avl(Twenty_avl_next) );
     //-----------------------------------------------------------------------------------//
 
@@ -232,8 +232,8 @@ module Vending_Machine (
             Twenty_out <= Twenty_out_mux;
 
             item_out1 <= item_out1_items;
-            item_out3 <= item_out2_itmes;
-            item_out2 <= item_out3_items;
+            item_out2 <= item_out2_itmes;
+            item_out3 <= item_out3_items;
 
 
         end
@@ -447,9 +447,11 @@ module Vending_Machine (
                             en_for_overflow_next = 0;
                         end
                     default:
-                        en_for_overflow_next = 0;
-                        next_state = S0;
-                        amount_in_next = 0;
+                        begin
+                            en_for_overflow_next = 0;
+                            next_state = S0;
+                            amount_in_next = 0;
+                        end
                         
                     endcase
             end
@@ -457,12 +459,6 @@ module Vending_Machine (
             //To enable the respective items module after user inputs item needed
             //And also determine the req_amount which goes to the return change block
             case(select_item)
-                default:
-                    req_amt = 0;
-                    en_for_change_next = 0;
-                    en_for_item1_next = 0;
-                    en_for_item2_next = 0;
-                    en_for_item3_next = 0;
                 2'd1:
                     if (amount_in_next - cost_It_1 >= 0) begin
                         en_for_change_next = 1;
@@ -499,6 +495,15 @@ module Vending_Machine (
                         en_for_item2_next = 0;
                         en_for_item3_next = 0;
                     end
+
+                default:
+                    begin
+                        req_amt = 0;
+                        en_for_change_next = 0;
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
+                    end
             endcase
 
 
@@ -506,10 +511,6 @@ module Vending_Machine (
         
         else if(rst) begin
             next_state = S0;
-            
-            Five_avl_next = 0;
-            Ten_avl_next = 0;
-            Twenty_avl_next = 0;
 
             Five_in_total_next = 0;
             Ten_in_total_next = 0;
