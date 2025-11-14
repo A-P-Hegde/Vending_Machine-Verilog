@@ -23,7 +23,7 @@ module Item (
     input [7:0] cost;
 
     //always block 
-    always @(posedge clk or posedge rst) begin
+    always @(*) begin
         
         //Reseting
         if(rst) begin

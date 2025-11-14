@@ -10,7 +10,8 @@ module tb_Vending_Machine;
   // Outputs
   wire [7:0] Five_out, Ten_out, Twenty_out;
   wire item_out1, item_out2, item_out3;
-
+  wire [8:0]  current_state;
+  wire [7:0] amount_in;
   // Instantiate DUT
   Vending_Machine uut (
     .clk(clk),
@@ -25,7 +26,9 @@ module tb_Vending_Machine;
     .Twenty_out(Twenty_out),
     .item_out1(item_out1),
     .item_out2(item_out2),
-    .item_out3(item_out3)
+    .item_out3(item_out3),
+    .current_state(current_state),
+    .amount_in(amount_in)
   );
 
   // Clock generation
@@ -61,8 +64,10 @@ module tb_Vending_Machine;
     Twenty_in = 1; #10; Twenty_in = 0; #10;
     Ten_in = 1; #10; Ten_in = 0; #10;
     select_item = 2'b10;  // select item 2
-    #60;
+    #40;
     select_item = 2'b00;
+    #50;
+    rst = 1; en =0; #20; rst =0 ; en =1;
     #50;
 
     // Test 3 — Overflow: insert more than ₹40
@@ -93,11 +98,11 @@ module tb_Vending_Machine;
   // Monitor outputs
   initial begin
     $monitor(
-      "t=%0t | clk=%b rst=%b en=%b sel=%b | ₹5in=%b ₹10in=%b ₹20in=%b || out ₹5=%d ₹10=%d ₹20=%d | items={1:%b,2:%b,3:%b}",
+      "t=%0t | clk=%b rst=%b en=%b sel=%b | ₹5in=%b ₹10in=%b ₹20in=%b || out ₹5=%d ₹10=%d ₹20=%d | items={1:%b,2:%b,3:%b} | state = %d | amount_in = %d" ,
       $time, clk, rst, en, select_item,
       Five_in, Ten_in, Twenty_in,
       Five_out, Ten_out, Twenty_out,
-      item_out1, item_out2, item_out3
+      item_out1, item_out2, item_out3,current_state,amount_in
     );
   end
 

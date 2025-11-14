@@ -14,7 +14,9 @@ module Vending_Machine (
     Five_out,Ten_out,Twenty_out,
     item_out3,
     item_out2,
-    item_out1
+    item_out1,
+    current_state,
+    amount_in
     //These are the ports needed the names are self explanatory
 );
     //-----------------------------------------------------------------------------------//
@@ -29,7 +31,9 @@ module Vending_Machine (
 
     //Regs needed for other modules
     reg [7:0] req_amt;                                            // Total amt given by user minus cost of item
-    reg [7:0] amount_in,amount_in_next;                                         //Total amt given by user
+    output reg [7:0] amount_in;
+    reg [7:0] amount_in_next;                                         //Total amt given by user
+    reg [7:0] req_amt_next;                                        // <-- added: synchronous next for req_amt
     wire item_out1_items,item_out2_itmes,item_out3_items;
 
     //Output given by return change module after getting the item
@@ -75,7 +79,8 @@ module Vending_Machine (
 
     //State reg This tells the current and next state
     //Any descision taken will be with respect to this
-    reg [8:0]current_state,next_state;
+    output reg [8:0]current_state;
+    reg [8:0] next_state;
 
     //Item Cost Parameter
     //Different item different cost
@@ -115,7 +120,7 @@ module Vending_Machine (
     .amount_in(amount_in),.item_out(item_out3_items));     //THIS IS COMPLETE 
 
     //Module to directly return money given to machine if exceeds 40 
-    Overflow_return ov(.clk(clk),.rst(internal_reset),.en(en_for_overflow),
+    Overflow_return ov(.rst(internal_reset),.en(en_for_overflow),
     .Five_in(Five_in),.Ten_in(Ten_in),.Twenty_in(Twenty_in),
     .Five_out(Five_out_overflow),.Ten_out(Ten_out_overflow),
     .Twenty_out(Twenty_out_overflow)); //THIS IS COMPLETE
@@ -137,14 +142,14 @@ module Vending_Machine (
 
     //State 0 rupees - 40 rupees 
     parameter S0 = 9'd0,
-                    S5 = 9'd2,
-                    S10 = 9'd4,
-                    S15 = 9'd8,
-                    S20 = 9'd16,
-                    S25 = 9'd32,
-                    S30 = 9'd64,
-                    S35 = 9'd128,
-                    S40 = 9'd256;
+                    S5 = 9'd1,
+                    S10 = 9'd2,
+                    S15 = 9'd3,
+                    S20 = 9'd4,
+                    S25 = 9'd5,
+                    S30 = 9'd6,
+                    S35 = 9'd7,
+                    S40 = 9'd8;
 
     //-----------------------------------------------------------------------------------//
 
@@ -174,13 +179,15 @@ module Vending_Machine (
             en_for_change <= 0;
             en_for_overflow <= 0;
             internal_reset <= 1;
-            
+            current_state <= S0;
+            next_state <= S0;
+            amount_in <= 0;
         end
 
 
         //Resetting after item out
         //When item is out it waits for 4 clock cycles then resets
-        else if(item_out1 || item_out2 || item_out3) begin
+        else if(item_out1 || item_out2 || item_out3 || Five_out || Ten_out || Twenty_out) begin
 
             if(rst_counter == 4) begin    
                 Five_in_total <= 0;
@@ -200,6 +207,8 @@ module Vending_Machine (
                 en_for_change <= 0;
                 internal_reset <= 1;
                 en_for_overflow <= 0;
+                amount_in <= 0;
+                current_state <= S0;        // ensure state reset after item dispense cycles
             end
 
             else
@@ -235,6 +244,8 @@ module Vending_Machine (
             item_out2 <= item_out2_itmes;
             item_out3 <= item_out3_items;
 
+            // register req_amt from combinational decision
+            req_amt <= req_amt_next;
 
         end
 
@@ -260,198 +271,218 @@ module Vending_Machine (
 
    always @(*) begin
 
-        Five_in_total_next = Five_in_total;
-        Ten_in_total_next = Ten_in_total;
-        Twenty_in_total_next = Twenty_in_total;
+        // ---------- DEFAULTS for all _next signals to avoid latches ----------
+        next_state            = current_state;
+        amount_in_next        = amount_in;
+        Five_in_total_next    = Five_in_total;
+        Ten_in_total_next     = Ten_in_total;
+        Twenty_in_total_next  = Twenty_in_total;
 
+        en_for_change_next    = en_for_change;
+        en_for_item1_next     = en_for_item1;
+        en_for_item2_next     = en_for_item2;
+        en_for_item3_next     = en_for_item3;
+        en_for_overflow_next  = 0;           // default off
+
+        req_amt_next          = req_amt;     // make a _next and update it in sequential block
+
+        // If enabled, handle inputs and selections
         if(en) begin
              //When money is input
-            if(Five_in || Ten_in || Twenty_in)begin   
+            if(Five_in || Ten_in || Twenty_in) begin   
                 case(current_state) 
-                    S0:
+                    S0: begin
                         if(Five_in) begin
                             next_state = S5;
-                            amount_in_next = 5;
+                            amount_in_next = 8'd5;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S10;
-                            amount_in_next = 10;
+                            amount_in_next = 8'd10;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S20;
-                            amount_in_next = 20;
+                            amount_in_next = 8'd20;
                             Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S0;
-                            amount_in_next = 0;
+                            amount_in_next = 8'd0;
                         end
-                    S5:
+                    end
+                    S5: begin
                         if(Five_in) begin
                             next_state = S10;
-                            amount_in_next = 10;
+                            amount_in_next = 8'd10;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S15;
-                            amount_in_next = 15;
+                            amount_in_next = 8'd15;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S25;
-                            amount_in_next = 25;
+                            amount_in_next = 8'd25;
                             Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S5;
-                            amount_in_next = 5;
+                            amount_in_next = 8'd5;
                         end
-                    S10:
+                    end
+                    S10: begin
                         if(Five_in) begin
-                            amount_in_next = 15;
+                            amount_in_next = 8'd15;
                             next_state = S15;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S20;
-                            amount_in_next = 20;
+                            amount_in_next = 8'd20;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S30;
-                            amount_in_next = 30;
+                            amount_in_next = 8'd30;
                             Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
-                            amount_in_next = 10;
+                            amount_in_next = 8'd10;
                             next_state = S10;
                         end
-                    S15:
+                    end
+                    S15: begin
                         if(Five_in) begin
                             next_state = S20;
-                            amount_in_next = 20;
+                            amount_in_next = 8'd20;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S25;
-                            amount_in_next = 25;
+                            amount_in_next = 8'd25;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S35;
-                            amount_in_next = 35;
+                            amount_in_next = 8'd35;
                             Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S15;
-                            amount_in_next = 15;
+                            amount_in_next = 8'd15;
                         end
-                    S20:
+                    end
+                    S20: begin
                         if(Five_in) begin
                             next_state = S25;
-                            amount_in_next = 25;
+                            amount_in_next = 8'd25;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S30;
-                            amount_in_next = 30;
+                            amount_in_next = 8'd30;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             next_state = S40;
-                            amount_in_next = 40;
+                            amount_in_next = 8'd40;
                             Twenty_in_total_next = Twenty_in_total + 1;
                         end
                         else begin
                             next_state = S20;
-                            amount_in_next = 20;
+                            amount_in_next = 8'd20;
                         end
+                    end
                     //Until here its regular state change only
                     //After here there will be overflow conditions also therfore we need to handle it
                     //When overflow condition is reached (i.e money in system > 40)
                     //Enable signal to the overflow block is 1 and stste remains the same
 
-                    S25:
+                    S25: begin
                         if(Five_in) begin
                             next_state = S30;
-                            amount_in_next = 30;
+                            amount_in_next = 8'd30;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S35;
-                            amount_in_next = 35;
+                            amount_in_next = 8'd35;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in) begin
                             en_for_overflow_next = 1;
                             next_state = S25;
-                            amount_in_next = 25;
+                            amount_in_next = 8'd25;
                         end
                         else begin
                             next_state = S25;
-                            amount_in_next = 25;
+                            amount_in_next = 8'd25;
                         end
+                    end
 
-                    S30:
+                    S30: begin
                         if(Five_in) begin
                             next_state = S35;
-                            amount_in_next = 35;
+                            amount_in_next = 8'd35;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             next_state = S40;
-                            amount_in_next = 40;
+                            amount_in_next = 8'd40;
                             Ten_in_total_next = Ten_in_total + 1;
                         end
                         else if(Twenty_in)begin
                             next_state = S30;
-                            amount_in_next = 30;
+                            amount_in_next = 8'd30;
                             en_for_overflow_next = 1;
                         end
                         else begin
                             next_state = S30;
-                            amount_in_next = 30;
+                            amount_in_next = 8'd30;
                         end
-                    S35:
+                    end
+                    S35: begin
                         if(Five_in) begin
                             next_state = S40;
-                            amount_in_next = 40;
+                            amount_in_next = 8'd40;
                             Five_in_total_next = Five_in_total + 1;
                         end
                         else if(Ten_in) begin
                             en_for_overflow_next = 1;
                             next_state = S35;
-                            amount_in_next = 35;
+                            amount_in_next = 8'd35;
                         end
                         else if(Twenty_in)begin
                             en_for_overflow_next = 1;
                             next_state = S35;
-                            amount_in_next = 35;
+                            amount_in_next = 8'd35;
                         end
                         else  begin
                             next_state = S35;
-                            amount_in_next = 35;
+                            amount_in_next = 8'd35;
                             en_for_overflow_next = 0;
                         end
-                    S40:
-                        if(Five_in | Ten_in | Twenty_in) begin
+                    end
+                    S40: begin
+                        if(Five_in || Ten_in || Twenty_in) begin   // use logical OR
                             en_for_overflow_next = 1;
                             next_state = S40;
-                            amount_in_next = 40;
+                            amount_in_next = 8'd40;
                         end
                         else begin
                             next_state = S40;
-                            amount_in_next = 40;
+                            amount_in_next = 8'd40;
                             en_for_overflow_next = 0;
                         end
-                    default:
-                        begin
-                            en_for_overflow_next = 0;
-                            next_state = S0;
-                            amount_in_next = 0;
-                        end
+                    end
+                    default: begin
+                        en_for_overflow_next = 0;
+                        next_state = S0;
+                        amount_in_next = 8'd0;
+                    end
                         
                     endcase
             end
@@ -459,51 +490,62 @@ module Vending_Machine (
             //To enable the respective items module after user inputs item needed
             //And also determine the req_amount which goes to the return change block
             case(select_item)
-                2'd1:
-                    if (amount_in_next - cost_It_1 >= 0) begin
+                2'd1: begin
+                    if (amount_in_next >= cost_It_1) begin
                         en_for_change_next = 1;
-                        req_amt = amount_in_next - cost_It_1; 
+                        req_amt_next = amount_in_next - cost_It_1; 
                         en_for_item1_next = 1;
+                        en_for_item2_next = 0;
+                        en_for_item3_next = 0;
                     end
-                        else begin
+                    else begin
                         en_for_change_next = 0;
                         en_for_item1_next = 0;
                         en_for_item2_next = 0;
                         en_for_item3_next = 0;
+                        req_amt_next = 0;
                     end
-                2'd2:
-                    if (amount_in_next - cost_It_2 >= 0) begin
+                end
+                2'd2: begin
+                    if (amount_in_next >= cost_It_2) begin
                         en_for_change_next = 1;
-                        req_amt = amount_in_next - cost_It_2; 
+                        req_amt_next = amount_in_next - cost_It_2; 
                         en_for_item2_next = 1;
+                        en_for_item1_next = 0;
+                        en_for_item3_next = 0;
                     end
-                        else begin
+                    else begin
                         en_for_change_next = 0;
                         en_for_item1_next = 0;
                         en_for_item2_next = 0;
                         en_for_item3_next = 0;
+                        req_amt_next = 0;
                     end
-                2'd3:
-                    if (amount_in_next - cost_It_3 >= 0) begin
+                end
+                2'd3: begin
+                    if (amount_in_next >= cost_It_3) begin
                         en_for_change_next = 1;
-                        req_amt = amount_in_next - cost_It_3; 
+                        req_amt_next = amount_in_next - cost_It_3; 
                         en_for_item3_next = 1;
+                        en_for_item1_next = 0;
+                        en_for_item2_next = 0;
                     end
-                        else begin
+                    else begin
                         en_for_change_next = 0;
                         en_for_item1_next = 0;
                         en_for_item2_next = 0;
                         en_for_item3_next = 0;
+                        req_amt_next = 0;
                     end
+                end
 
-                default:
-                    begin
-                        req_amt = 0;
-                        en_for_change_next = 0;
-                        en_for_item1_next = 0;
-                        en_for_item2_next = 0;
-                        en_for_item3_next = 0;
-                    end
+                default: begin
+                    req_amt_next = 8'd0;
+                    en_for_change_next = 0;
+                    en_for_item1_next = 0;
+                    en_for_item2_next = 0;
+                    en_for_item3_next = 0;
+                end
             endcase
 
 
@@ -516,16 +558,17 @@ module Vending_Machine (
             Ten_in_total_next = 0;
             Twenty_in_total_next = 0;
 
-            amount_in_next = 0;
+            amount_in_next = 8'd0;
 
             en_for_item1_next = 0;
             en_for_item2_next = 0;
             en_for_item3_next = 0;
             en_for_change_next = 0;
             en_for_overflow_next = 0;
+            req_amt_next = 8'd0;
 
         end
     end
 
-    
+
 endmodule

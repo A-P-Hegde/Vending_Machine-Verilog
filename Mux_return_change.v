@@ -11,14 +11,15 @@ module Mux_return_change (
     input [23:0] Overflow,Change;
     output reg [23:0] Out;
 
-    always @(*)
-        if(rst) begin
-            Out <= 0;
-        end
-        else begin
-            if(en1)
-                Out <= Change;
-            else if(en2)
-                Out <= Overflow;
-        end
+    always @(*) begin
+    if (rst)     
+       Out = 24'd0;
+    else if (en1)
+       Out = Change;
+    else if (en2)
+       Out = Overflow;
+    else   
+        Out = 24'd0;
+end
+
 endmodule
