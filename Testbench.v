@@ -10,10 +10,8 @@ module tb_Vending_Machine;
   // Outputs
   wire [7:0] Five_out, Ten_out, Twenty_out;
   wire item_out1, item_out2, item_out3;
-  wire [8:0]  current_state;
-  wire [7:0] amount_in;
   wire Five_out_overflow,Ten_out_overflow,Twenty_out_overflow;
-  wire [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
+
   // Instantiate DUT
   Vending_Machine uut (
     .clk(clk),
@@ -29,14 +27,9 @@ module tb_Vending_Machine;
     .item_out1(item_out1),
     .item_out2(item_out2),
     .item_out3(item_out3),
-    .current_state(current_state),
-    .amount_in(amount_in),
     .Five_out_overflow(Five_out_overflow),
     .Ten_out_overflow(Ten_out_overflow),
-    .Twenty_out_overflow(Twenty_out_overflow),
-    .Five_in_total(Five_in_total),
-    .Ten_in_total(Ten_in_total),
-    .Twenty_in_total(Twenty_in_total)
+    .Twenty_out_overflow(Twenty_out_overflow)
   );
 
   // Clock generation
@@ -105,11 +98,11 @@ module tb_Vending_Machine;
   // Monitor outputs
   initial begin
     $monitor(
-      "t=%0t | clk=%b rst=%b en=%b sel=%b | ₹5in=%b ₹10in=%b ₹20in=%b || out ₹5=%d ₹10=%d ₹20=%d | items={1:%b,2:%b,3:%b} | state = %d | amount_in = %d" ,
+      "t=%0t | clk=%b rst=%b en=%b sel=%b | ₹5in=%b ₹10in=%b ₹20in=%b || out ₹5=%d ₹10=%d ₹20=%d | items={1:%b,2:%b,3:%b} " ,
       $time, clk, rst, en, select_item,
       Five_in, Ten_in, Twenty_in,
       Five_out, Ten_out, Twenty_out,
-      item_out1, item_out2, item_out3,current_state,amount_in
+      item_out1, item_out2, item_out3
     );
   end
 

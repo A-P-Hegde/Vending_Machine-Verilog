@@ -15,14 +15,9 @@ module Vending_Machine (
     item_out3,
     item_out2,
     item_out1,
-    current_state,
-    amount_in,
     Five_out_overflow,
     Ten_out_overflow,
-    Twenty_out_overflow,
-    Five_in_total,
-    Ten_in_total,
-    Twenty_in_total
+    Twenty_out_overflow
     //These are the ports needed the names are self explanatory
 );
     //-----------------------------------------------------------------------------------//
@@ -37,7 +32,7 @@ module Vending_Machine (
 
     //Regs needed for other modules
     reg [7:0] req_amt;                                            // Total amt given by user minus cost of item
-    output reg [7:0] amount_in;
+    reg [7:0] amount_in;
     reg [7:0] amount_in_next;                                         //Total amt given by user
     reg [7:0] req_amt_next;                                        // <-- added: synchronous next for req_amt
     wire item_out1_items,item_out2_itmes,item_out3_items;
@@ -71,7 +66,7 @@ module Vending_Machine (
     reg internal_reset;   
     
     //To keep track of how many Five,Ten,Twenty are input to the system
-    output reg [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
+    reg [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
     reg [7:0] Five_in_total_next,Ten_in_total_next,Twenty_in_total_next;
 
     //To keep track of how many Five,Ten,Twenty are already existing in the system
@@ -80,7 +75,7 @@ module Vending_Machine (
 
     //State reg This tells the current and next state
     //Any descision taken will be with respect to this
-    output reg [8:0]current_state;
+    reg [8:0]current_state;
     reg [8:0] next_state;
 
     //Item Cost Parameter
