@@ -16,7 +16,13 @@ module Vending_Machine (
     item_out2,
     item_out1,
     current_state,
-    amount_in
+    amount_in,
+    Five_out_overflow,
+    Ten_out_overflow,
+    Twenty_out_overflow,
+    Five_in_total,
+    Ten_in_total,
+    Twenty_in_total
     //These are the ports needed the names are self explanatory
 );
     //-----------------------------------------------------------------------------------//
@@ -26,7 +32,7 @@ module Vending_Machine (
     input clk,rst,en;
     input [1:0] select_item;
     input Five_in,Ten_in,Twenty_in;
-    output reg [7:0] Five_out,Ten_out,Twenty_out;
+    output wire [7:0] Five_out,Ten_out,Twenty_out;
     output reg item_out1,item_out3,item_out2;
 
     //Regs needed for other modules
@@ -37,16 +43,11 @@ module Vending_Machine (
     wire item_out1_items,item_out2_itmes,item_out3_items;
 
     //Output given by return change module after getting the item
-    //Output given by overflow module when excess money is given by user unnecacarily
-    wire [7:0] Five_out_change;                                
-    wire  Five_out_overflow;                              
-    wire [7:0] Ten_out_change;
-    wire Ten_out_overflow;
-    wire [7:0] Twenty_out_change;
-    wire Twenty_out_overflow;
-    wire Five_out_mux;
-    wire Ten_out_mux;
-    wire Twenty_out_mux;
+    //Output given by overflow module when excess money is given by user unnecacarily                                
+    output wire  Five_out_overflow;                              
+    output wire Ten_out_overflow;
+    output wire Twenty_out_overflow;
+
 
     //This is an output signal fromreturn change block so which tells to dispense item once excess money is given out
     //If no money is available in the machine to return it gives users complete money back and dosent dispense
@@ -70,7 +71,7 @@ module Vending_Machine (
     reg internal_reset;   
     
     //To keep track of how many Five,Ten,Twenty are input to the system
-    reg [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
+    output reg [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
     reg [7:0] Five_in_total_next,Ten_in_total_next,Twenty_in_total_next;
 
     //To keep track of how many Five,Ten,Twenty are already existing in the system
@@ -101,7 +102,7 @@ module Vending_Machine (
     Change_remaining ch(.clk(clk),.rst(internal_reset),.en(en_for_change),
     .req_amt(req_amt),.Five_avl(Five_avl), .Ten_avl(Ten_avl), .Twenty_avl(Twenty_avl),  // COMPLETED INSTANTIATION
     .Five_in(Five_in_total),.Ten_in(Ten_in_total),.Twenty_in(Twenty_in_total),
-    .Five_out(Five_out_change),.Ten_out(Ten_out_change),.Twenty_out(Twenty_out_change),
+    .Five_out(Five_out),.Ten_out(Ten_out),.Twenty_out(Twenty_out),
     .Five_avl_next(Five_avl_next), .Ten_avl_next(Ten_avl_next), .Twenty_avl_next(Twenty_avl_next),
     .enable_dispense(enable_dispense));
 
@@ -125,11 +126,6 @@ module Vending_Machine (
     .Five_out(Five_out_overflow),.Ten_out(Ten_out_overflow),
     .Twenty_out(Twenty_out_overflow)); //THIS IS COMPLETE
 
-    //Module to multplex the outputs of two money returning modules so that there are no conflicts
-    Mux_return_change mx(.rst(internal_reset),.en1(en_for_change),.en2(en_for_overflow),
-    .Overflow({Five_out_overflow,Ten_out_overflow,Twenty_out_overflow}),
-    .Change({Five_out_change,Ten_out_change,Twenty_out_change}),
-    .Out({Five_out_mux,Ten_out_mux,Twenty_out_mux}));  //THIS IS COMPLETE
 
     DenominationStorage Deno1(.clk(clk), .rst(internal_reset), .w_en(enable_dispense), 
     .five_avl(Five_avl), .ten_avl(Ten_avl), .twenty_avl(Twenty_avl),
@@ -165,9 +161,6 @@ module Vending_Machine (
             Five_in_total <= 0;
             Ten_in_total <= 0;
             Twenty_in_total <= 0;
-            Five_out <= 0;
-            Ten_out <= 0;
-            Twenty_out <= 0;
             item_out1 <= 0;
             item_out2 <= 0;
             item_out3 <= 0;
@@ -193,9 +186,6 @@ module Vending_Machine (
                 Five_in_total <= 0;
                 Ten_in_total <= 0;
                 Twenty_in_total <= 0;
-                Five_out <= 0;
-                Ten_out <= 0;
-                Twenty_out <= 0;
                 item_out1 <= 0;
                 item_out2 <= 0;
                 item_out3 <= 0;
@@ -236,9 +226,6 @@ module Vending_Machine (
             en_for_item3 <= en_for_item3_next;
             en_for_overflow <= en_for_overflow_next;
 
-            Five_out <= Five_out_mux;
-            Ten_out <= Ten_out_mux;
-            Twenty_out <= Twenty_out_mux;
 
             item_out1 <= item_out1_items;
             item_out2 <= item_out2_itmes;

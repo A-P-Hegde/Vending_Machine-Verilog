@@ -12,6 +12,8 @@ module tb_Vending_Machine;
   wire item_out1, item_out2, item_out3;
   wire [8:0]  current_state;
   wire [7:0] amount_in;
+  wire Five_out_overflow,Ten_out_overflow,Twenty_out_overflow;
+  wire [7:0] Five_in_total,Ten_in_total,Twenty_in_total;
   // Instantiate DUT
   Vending_Machine uut (
     .clk(clk),
@@ -28,7 +30,13 @@ module tb_Vending_Machine;
     .item_out2(item_out2),
     .item_out3(item_out3),
     .current_state(current_state),
-    .amount_in(amount_in)
+    .amount_in(amount_in),
+    .Five_out_overflow(Five_out_overflow),
+    .Ten_out_overflow(Ten_out_overflow),
+    .Twenty_out_overflow(Twenty_out_overflow),
+    .Five_in_total(Five_in_total),
+    .Ten_in_total(Ten_in_total),
+    .Twenty_in_total(Twenty_in_total)
   );
 
   // Clock generation
@@ -86,7 +94,6 @@ module tb_Vending_Machine;
     // Test 5 — Reset mid-transaction
     $display("Test 5: Reset during transaction");
     Ten_in = 1; #10; Ten_in = 0; #10;
-    rst = 1; #20; rst = 0;
     Twenty_in = 1; #10; Twenty_in = 0; #10;
     select_item = 2'b11;
     #60;
