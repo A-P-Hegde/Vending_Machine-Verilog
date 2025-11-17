@@ -168,7 +168,6 @@ module Vending_Machine (
             en_for_overflow <= 0;
             internal_reset <= 1;
             current_state <= S0;
-            next_state <= S0;
             amount_in <= 0;
         end
 

@@ -30,7 +30,6 @@ module Change_remaining (
     input clk, en, rst;
 
     // These are secondary memory needed for logic (registered values)
-    reg [7:0] amt;
     reg [7:0] temp_five, temp_ten, temp_twenty;
 
     // These are the combinational "next" values for next-state logic
@@ -56,7 +55,6 @@ module Change_remaining (
             Ten_out <= 0;
             Twenty_out <= 0;
             enable_dispense <= 0;
-            amt <= 0;
             temp_five <= 0;
             temp_ten <= 0;
             temp_twenty <= 0;
@@ -69,7 +67,6 @@ module Change_remaining (
             Twenty_out <= Twenty_out_next;
             enable_dispense <= enable_dispense_next;
 
-            amt <= amt_next;
             temp_five <= temp_five_next;
             temp_ten <= temp_ten_next;
             temp_twenty <= temp_twenty_next;
@@ -89,6 +86,9 @@ module Change_remaining (
     always @(*) begin
 
         // Default assignments to prevent latches
+        Five_avl_next   = Five_avl;
+        Ten_avl_next    = Ten_avl;
+        Twenty_avl_next = Twenty_avl;
         amt_next = req_amt;
         temp_five_next = 0;
         temp_ten_next = 0;
